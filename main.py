@@ -34,9 +34,7 @@ def message_reply(message):
         send_categories(message)
     if text in help_info['categories'].keys(): #отправка вопросов
         send_questions(message)
-    for category in help_info['categories'].keys(): #отправка ответов на вопросы
-        if text in help_info['categories'][category].keys():
-            bot.send_message(message.chat.id, help_info['categories'][category][text])
+    send_answers(message)
     if text == 'На Главную':
         start(message)
 
@@ -54,8 +52,7 @@ def send_categories(message):
     text_message = ''
     for category in categories:
         category_num = categories.index(category) + 1
-        category_content = category
-        text_message += f'{category_num}. {category_content} \n'
+        text_message += f'{category_num}. {category} \n'
     bot.send_message(message.chat.id, f'Выберите, какая из данных тем вас интересует:\n{text_message}', reply_markup=markup)
 
 #раскрытие категорий, отправка вопросов
@@ -68,9 +65,20 @@ def send_questions(message):
     text_message = ''
     for question in questions:
         question_num = questions.index(question) + 1
-        question_content = question
-        text_message += f'{question_num}. {question_content} \n'
+        text_message += f'{question_num}. {question} \n'
     bot.send_message(message.chat.id, f'Часто задаваемые вопросы по этой теме:\n{text_message}', reply_markup=markup)
+
+
+def send_answers(message):
+    for category in help_info['categories'].keys():
+        if message.text in help_info['categories'][category].keys():
+            answer = help_info['categories'][category][message.text]
+            if 'media/' in answer:
+                ans_doc, caption = answer.split(';')
+                ans_doc = open(ans_doc, "rb")
+                bot.send_document(message.chat.id, ans_doc, caption=caption)
+            else:
+                bot.send_message(message.chat.id, answer)
 
 
 bot.infinity_polling()
