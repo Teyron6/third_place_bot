@@ -30,17 +30,17 @@ def message_reply(message):
         button_2(message)
     if text == 'techsupp':
         techsupp(message)
-
+    if 'Вопрос:' in text:
+        message_reply_ts(message)
 
 def button_2(message):
     bot.send_message(message.chat.id, 'ты нажал на кнопку 2')
 
 
 def techsupp(message):
-    bot.send_message(message.chat.id, 'Напишите ваш вопрос и мы ответим на него как можно скорее')
+    bot.send_message(message.chat.id, 'Напишите ваш вопрос в формате "Вопрос: ..." и мы ответим вам как можно скорее')
 
 
-@bot.message_handler(func=lambda message: True)#хендлер не работает
 def message_reply_ts(message):
     bot.send_message(os.environ.get('GROUP_ID'), message.text)
 
