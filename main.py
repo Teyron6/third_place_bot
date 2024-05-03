@@ -22,12 +22,11 @@ except FileNotFoundError:
 @bot.message_handler(commands=['start'])
 def start(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    buttonA = types.KeyboardButton('techsupp')
-    buttonB = types.KeyboardButton('кнопка 2')
-    buttonC = types.KeyboardButton('Часто задаваемые вопросы')
+    buttonA = types.KeyboardButton('Техподдержка')
+    buttonB = types.KeyboardButton('Часто задаваемые вопросы')
 
-    markup.row(buttonA, buttonB)
-    markup.row(buttonC)
+    markup.row(buttonA)
+    markup.row(buttonB)
     
     bot.send_message(message.chat.id, 'Привет👋, я бот школы третье место\nЗдесь ты сможешь:\n・ Найти ответы на интересующие тебя вопросы❓\n・ Узнать какие курсы у нас есть📗\n・ Чему мы обучаем🎓\n・ Связатся с администратором💻\n\nНажми на интересующие тебя темы на клавиатуре👇', reply_markup=markup)
 
@@ -44,10 +43,9 @@ def ts_reply(message):
                     json.dump(needHelp, file, ensure_ascii=False)
                 found = True
         if not found:
-            bot.send_message(os.environ.get('GROUP_ID'),'Не удолось найти сообщений от данного пользователя.')
+            bot.send_message(os.environ.get('GROUP_ID'),'Не удалось найти сообщений от данного пользователя.')
     else:
         bot.send_message(os.environ.get('GROUP_ID'),'Все сообщения отвечены')
-
 
 
 @bot.message_handler(content_types='text')
@@ -61,7 +59,7 @@ def message_reply(message):
     if text == 'На Главную':
         start(message)
     if text == 'techsupp':
-        techsupp(message)
+        bot.send_message(message.chat.id, 'Напишите ваш вопрос в формате "Вопрос: ..." и мы ответим вам как можно скорее')
     if 'Вопрос:' in text:
         if not needHelp:  #проверяет что файл пустой
             message_to_ts(message)
@@ -112,10 +110,6 @@ def send_answers(message):
                 bot.send_document(message.chat.id, ans_doc, caption=caption)
             else:
                 bot.send_message(message.chat.id, answer)
-
-
-def techsupp(message):
-    bot.send_message(message.chat.id, 'Напишите ваш вопрос в формате "Вопрос: ..." и мы ответим вам как можно скорее')
 
 
 def message_to_ts(message):
