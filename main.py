@@ -34,10 +34,11 @@ def start(message):
 @bot.message_handler(commands=['answer'])  #Команда ответа на сообщения пользователя
 def ts_reply(message):
     if needHelp:
+        text = message.text
         found = False
         for user in needHelp:  #цикл для проверки наличия сообщения от пользователя
-            if user['username'] in message.text and str(user['message_id']) in message.text:
-                bot.send_message(user['chat_id'], message.text)
+            if user['username'] in text and str(user['message_id']) in text:
+                bot.send_message(user['chat_id'], text[text.lower().find('ответ'):])
                 needHelp.remove(user)
                 with open("needHelp.json", "w", encoding='utf8') as file:
                     json.dump(needHelp, file, ensure_ascii=False)
