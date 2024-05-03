@@ -10,12 +10,10 @@ bot = telebot.TeleBot(os.environ.get('TG_TOKEN'))
 try:
     with open('needHelp.json', 'r', encoding='utf8') as file:
         needHelp = json.load(file)
-        print(1)
 except FileNotFoundError:
     needHelp = []
     with open("needHelp.json", "w", encoding='utf8') as file:
         json.dump(needHelp, file, ensure_ascii=False)
-        print(0)
 
 @bot.message_handler(commands=['start'])
 def start(message):
