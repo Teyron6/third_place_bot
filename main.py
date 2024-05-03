@@ -12,7 +12,6 @@ with open("question_answer.json", "r", encoding='utf-8') as f:
     help_info = json.load(f)
 
 
-# Функция пресылающая приветственное сообщение при старте бота (команда: /start)
 @bot.message_handler(commands=['start'])
 def start(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -26,43 +25,55 @@ def start(message):
     bot.send_message(message.chat.id, 'Привет👋, я бот школы третье место\nЗдесь ты сможешь:\n・ Найти ответы на интересующие тебя вопросы❓\n・ Узнать какие курсы у нас есть📗\n・ Чему мы обучаем🎓\n・ Связатся с администратором💻\n\nНажми на интересующие тебя темы на клавиатуре👇', reply_markup=markup)
 
 
-# Это функция ответа на сообщения
 @bot.message_handler(content_types='text')
 def message_reply(message):
     text = message.text
-    if text == 'Вопросы':
-        button_3(message)
-    if 'вопрос' in text:
-        questions_reply(message)
+    if text == 'Часто задаваемые вопросы' or text == 'Назад к категориям': #отправка категорий
+        send_categories(message)
+    if text in help_info['categories'].keys(): #отправка вопросов
+        send_questions(message)
+    send_answers(message)
+    if text == 'На Главную':
+        start(message)
 
 
-# функция которая отправляет список часто задаваемых вопросов
-def button_3(message):
+# отправляет список категорий
+def send_categories(message):
+    categories = list(help_info['categories'].keys())
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    buttonA = types.KeyboardButton('1 вопрос')
-    buttonB = types.KeyboardButton('2 вопрос')
-    buttonC = types.KeyboardButton('3 вопрос')
-    buttonD = types.KeyboardButton('4 вопрос')
-
-    markup.row(buttonA, buttonB)
-    markup.row(buttonC, buttonD)
+    for button in categories:
+        markup.row(types.KeyboardButton(button))
+    markup.row(types.KeyboardButton('На Главную'))
     text_message = ''
-    for q_and_a in help_info['questions']:
-        question_num = help_info['questions'].index(q_and_a) + 1
-        question_content = q_and_a['question']
-        text_message += f'{question_num}, {question_content}, \n'
-    bot.send_message(message.chat.id, text_message, reply_markup=markup)
+    for category in categories:
+        category_num = categories.index(category) + 1
+        text_message += f'{category_num}. {category} \n'
+    bot.send_message(message.chat.id, f'Выберите, какая из данных тем вас интересует:\n{text_message}', reply_markup=markup)
+
+#раскрытие категорий, отправка вопросов
+def send_questions(message):
+    questions = list(help_info['categories'][message.text].keys())
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    for button in questions:
+        markup.row(types.KeyboardButton(button))
+    markup.row(types.KeyboardButton('Назад к категориям'), types.KeyboardButton('На Главную'))
+    text_message = ''
+    for question in questions:
+        question_num = questions.index(question) + 1
+        text_message += f'{question_num}. {question} \n'
+    bot.send_message(message.chat.id, f'Часто задаваемые вопросы по этой теме:\n{text_message}', reply_markup=markup)
 
 
-# ответы на вопросы
-def questions_reply(message):
-    question_number, _ = message.text.split(' ')
-    question_id = int(question_number) - 1
-    bot.send_message(message.chat.id, help_info['questions'][question_id]['answer'])
-    if 'document' in help_info['questions'][question_id]:
-        ans_doc = open(help_info['questions'][question_id]['document'], "rb")
-        bot.send_document(message.chat.id, ans_doc)
+def send_answers(message):
+    for category in help_info['categories'].keys():
+        if message.text in help_info['categories'][category].keys():
+            answer = help_info['categories'][category][message.text]
+            if 'media/' in answer:
+                ans_doc, caption = answer.split(';')
+                ans_doc = open(ans_doc, "rb")
+                bot.send_document(message.chat.id, ans_doc, caption=caption)
+            else:
+                bot.send_message(message.chat.id, answer)
 
 
 bot.infinity_polling()
-
