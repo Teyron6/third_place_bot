@@ -24,7 +24,7 @@ def start(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     buttonA = types.KeyboardButton('techsupp')
     buttonB = types.KeyboardButton('кнопка 2')
-    buttonC = types.KeyboardButton('Вопросы')
+    buttonC = types.KeyboardButton('Часто задаваемые вопросы')
 
     markup.row(buttonA, buttonB)
     markup.row(buttonC)
