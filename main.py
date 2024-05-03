@@ -10,12 +10,19 @@ tg_token = os.environ['TG_TOKEN']
 bot = telebot.TeleBot(tg_token)
 with open("question_answer.json", "r", encoding='utf-8') as f:
     help_info = json.load(f)
+try:
+    with open('needHelp.json', 'r', encoding='utf8') as file:
+        needHelp = json.load(file)
+except FileNotFoundError:
+    needHelp = []
+    with open("needHelp.json", "w", encoding='utf8') as file:
+        json.dump(needHelp, file, ensure_ascii=False)
 
 
 @bot.message_handler(commands=['start'])
 def start(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    buttonA = types.KeyboardButton('кнопка 1')
+    buttonA = types.KeyboardButton('techsupp')
     buttonB = types.KeyboardButton('кнопка 2')
     buttonC = types.KeyboardButton('Вопросы')
 
@@ -23,6 +30,24 @@ def start(message):
     markup.row(buttonC)
     
     bot.send_message(message.chat.id, 'Привет👋, я бот школы третье место\nЗдесь ты сможешь:\n・ Найти ответы на интересующие тебя вопросы❓\n・ Узнать какие курсы у нас есть📗\n・ Чему мы обучаем🎓\n・ Связатся с администратором💻\n\nНажми на интересующие тебя темы на клавиатуре👇', reply_markup=markup)
+
+
+@bot.message_handler(commands=['answer'])  #Команда ответа на сообщения пользователя
+def ts_reply(message):
+    if needHelp:
+        found = False
+        for user in needHelp:  #цикл для проверки наличия сообщения от пользователя
+            if user['username'] in message.text and str(user['message_id']) in message.text:
+                bot.send_message(user['chat_id'], message.text)
+                needHelp.remove(user)
+                with open("needHelp.json", "w", encoding='utf8') as file:
+                    json.dump(needHelp, file, ensure_ascii=False)
+                found = True
+        if not found:
+            bot.send_message(os.environ.get('GROUP_ID'),'Не удолось найти сообщений от данного пользователя.')
+    else:
+        bot.send_message(os.environ.get('GROUP_ID'),'Все сообщения отвечены')
+
 
 
 @bot.message_handler(content_types='text')
@@ -35,6 +60,18 @@ def message_reply(message):
     send_answers(message)
     if text == 'На Главную':
         start(message)
+    if text == 'techsupp':
+        techsupp(message)
+    if 'Вопрос:' in text:
+        if not needHelp:  #проверяет что файл пустой
+            message_to_ts(message)
+        else:
+            for user in needHelp:  #проверяет есть ли пользователь в списке
+                if message.from_user.username == user['username']:#если есть, не добавляет новый запрос
+                    bot.send_message(message.chat.id, 'Вы уже отправили вопрос, пожалуйста дождитесь ответа')
+                    break
+                else:
+                    message_to_ts(message)
 
 
 # отправляет список категорий
@@ -49,6 +86,7 @@ def send_categories(message):
         category_num = categories.index(category) + 1
         text_message += f'{category_num}. {category} \n'
     bot.send_message(message.chat.id, f'Выберите, какая из данных тем вас интересует:\n{text_message}', reply_markup=markup)
+
 
 #раскрытие категорий, отправка вопросов
 def send_questions(message):
@@ -74,6 +112,23 @@ def send_answers(message):
                 bot.send_document(message.chat.id, ans_doc, caption=caption)
             else:
                 bot.send_message(message.chat.id, answer)
+
+
+def techsupp(message):
+    bot.send_message(message.chat.id, 'Напишите ваш вопрос в формате "Вопрос: ..." и мы ответим вам как можно скорее')
+
+
+def message_to_ts(message):
+    needHelp.append(
+        {
+            'username' : message.from_user.username,
+            'chat_id' : message.chat.id,
+            'message_id' : message.message_id
+        }
+    )
+    with open("needHelp.json", "w", encoding='utf8') as file:
+        json.dump(needHelp, file, ensure_ascii=False)#сохраняем запрос пользователя
+    bot.send_message(os.environ.get('GROUP_ID'), f'Пользователь @{message.from_user.username} написал: "{message.text}", message_id: {message.message_id}')#отправляем его в чат ТехПоддержки
 
 
 bot.infinity_polling()
